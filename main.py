@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from asyncio.tasks import sleep
 import random
 import time
@@ -61,3 +62,23 @@ if __name__ == '__main__':
     while True:
         scrape_cycle()
         time.sleep(30)
+=======
+from prometheus_client import start_http_server, Gauge
+import random
+import time
+from cdn_requests import *
+
+# Create a metric to track time spent and requests made.
+
+test_value = Gauge('steam_cdn_load', 'CDN Hostname + Load', ['hostname', 'load'])
+
+# Decorate function with metric.
+
+if __name__ == '__main__':
+    # Start up the server to expose the metrics.
+    start_http_server(8000)
+    # Generate some requests.
+    while True:
+       cdn_fetch(test_value)
+       time.sleep(10)
+>>>>>>> 31f1b27 (Added logic for getting CDN Response and creating gauge)
