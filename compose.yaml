@@ -8,32 +8,13 @@
 # database or a cache. For examples, see the Awesome Compose repository:
 # https://github.com/docker/awesome-compose
 services:
-  node-exporter:
-    image: quay.io/prometheus/node-exporter:latest
-    container_name: node-exporter
-    restart: unless-stopped
-    # host networking is required so node_exporter reports the HOST's
-    # filesystems/interfaces/etc, not the container's own bridge network.
-    network_mode: host
-    volumes:
-      - /proc:/host/proc:ro
-      - /sys:/host/sys:ro
-      - /:/host/root:ro,rslave
-    command:
-      - '--path.procfs=/host/proc'
-      - '--path.sysfs=/host/sys'
-      - '--path.rootfs=/host/root'
-      # bind explicitly to the same interface as prometheus/grafana below,
-      # instead of the 0.0.0.0 default that host networking would give it
-      - '--web.listen-address=10.50.8.1:9100'
-      - '--collector.filesystem.mount-points-exclude=^/(host/root/)?(dev|proc|run|sys|var/lib/docker/.+)($$|/)'
 
   prometheus:
     image: prom/prometheus
     container_name: prometheus
     restart: unless-stopped
     ports:
-      - "10.50.8.1:9090:9090"
+      - "9090:9090"
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
@@ -45,15 +26,13 @@ services:
     container_name: grafana
     restart: unless-stopped
     ports:
-      - "10.50.8.1:3000:3000"
+      - "3000:3000"
     volumes:
       - grafana-data:/var/lib/grafana
 
   steam-exporter:
     build:
       context: .
-    ports:
-      - 8000:8000
 
 volumes:
   prometheus-data:

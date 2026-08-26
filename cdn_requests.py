@@ -6,6 +6,11 @@ from ssl import SSLError
 import requests
 from prometheus_client import Gauge, Histogram
 
+
+DISCOVERY_INTERVAL = 600  # re-run full discovery every 10 minutes
+HEADERS = {
+    'User-Agent': 'pressurevessel/0.1 (+https://github.com/LabiJH/pressurevessel; monitoring probe, low-frequency)',
+}
 API_URL = "https://api.steampowered.com/IContentServerDirectoryService/GetServersForSteamPipe/v1/"
 REGION_RE = re.compile(r'cache\d+-([a-z0-9-]+)\.steamcontent\.com')
 POP_COORDS = {
@@ -43,31 +48,44 @@ http_response_time_hist = Histogram(
     ['region'],
     buckets=[0.05, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.75, 1.0, 2.0, 5.0],
 )
+_cached_hosts = []
+_last_discovery = 0
 
 def region_from_host(host: str) -> str:
     m = REGION_RE.match(host)
     return m.group(1) if m else 'other'
 
-def cdn_fetch() -> list:
+def cdn_fetch(force_refresh: bool = False) -> list:
+    global _cached_hosts, _last_discovery
     now = time.time()
+    if not force_refresh and _cached_hosts and (now - _last_discovery) < DISCOVERY_INTERVAL:
+        return _cached_hosts  # skip the 100 API calls entirely
+
     hostnames = []
 
+    # Cell_IDs are UNDOCUMENTED, up to 100 is an educated guess from what is known currently.
     for i in range(0, 100):
-        response = requests.get(API_URL, {"cell_id": i})
-        data = response.json()
+        try:
+            response = requests.get(API_URL, {"cell_id": i}, timeout=10.0, headers=HEADERS)
+            data = response.json()
+            # 'server' == dictionary in the servers list
+            for server in data["response"]["servers"]:
+                if server["type"] != "CDN":
+                    host_last_seen.labels(server["host"]).set(now)
+                if server["host"] not in hostnames:
+                    hostnames.append(server["host"])
 
-        # 'server' == dictionary in the servers list
-        for server in data["response"]["servers"]:
-            if server["type"] != "CDN":
-                host_last_seen.labels(server["host"]).set(now)
-            if server["host"] not in hostnames:
-                hostnames.append(server["host"])
+        except Exception as e:
+            print(f"[skip] cell {i} failed: {e.__class__.__name__}: {e}")
+            continue
 
         time.sleep(random.uniform(0.2, 0.4))
 
     for region, (lat,lon) in POP_COORDS.items():
        steam_cdn_pop_info.labels(region=region, lat=str(lat), lon=str(lon)).set(1)
 
+    _cached_hosts = hostnames
+    _last_discovery = now
     return hostnames
 
 
@@ -79,9 +97,8 @@ def RTT(url_list: list):
         time.sleep(jitter)
         try:
             region = region_from_host(hosts)
-            jitter = random.randint(1, 4)
             t1 = time.time()
-            r = requests.get(f'https://{hosts}', timeout=10.0)
+            requests.get(f'https://{hosts}', timeout=10.0, headers=HEADERS)
             t2 = time.time()
             ttt = (t2 - t1) * 1000
             http_response_time.labels(hosts, region).set(ttt)
@@ -89,13 +106,16 @@ def RTT(url_list: list):
             print(f"HTTPS response time for {hosts} : {ttt:.2f}ms")
 
         except requests.exceptions.SSLError:
-            t1 = time.time()
-            r = requests.get(f'http://{hosts}', timeout=10.0)
-            t2 = time.time()
-            ttt = (t2 - t1) * 1000
-            http_response_time.labels(hosts, region).set(ttt)
-            http_response_time_hist.labels(region).observe(ttt / 1000)
-            print(f"HTTP response time for {hosts} : {ttt:.2f}ms")
+            try:
+                t1 = time.time()
+                r = requests.get(f'http://{hosts}', timeout=10.0, headers=HEADERS)
+                t2 = time.time()
+                ttt = (t2 - t1) * 1000
+                http_response_time.labels(hosts, region).set(ttt)
+                http_response_time_hist.labels(region).observe(ttt / 1000)
+                print(f"HTTP response time for {hosts} : {ttt:.2f}ms")
+            except Exception as e:
+                print(e)
 
         except requests.exceptions.RequestException as e:
             print(f"[skip] {hosts} failed: {e.__class__.__name__}: {e}")

@@ -7,10 +7,12 @@ if __name__ == '__main__':
     # Start up the server to expose the metrics.
     start_http_server(8000)
     nodes = []
-    jitter = 0
 
     while True:
-       nodes = cdn_fetch()
-       RTT(nodes)
-       jitter = random.randint(60,120)
-       time.sleep(jitter)
+        try:
+            nodes = cdn_fetch()
+            RTT(nodes)
+            time.sleep(random.randint(60,120))
+        except Exception as e:
+            print(e)
+            time.sleep(30)
