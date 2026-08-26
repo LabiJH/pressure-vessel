@@ -8,7 +8,7 @@
 # For more information, see https://docs.docker.com/dhi/
 
 # Use the dev image to build and install dependencies.
-FROM dhi.io/python:3.12-dev AS builder
+FROM python:3.12-slim AS builder
 
 WORKDIR /app
 
@@ -24,7 +24,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     pip install -r requirements.txt
 
 # Use the minimal runtime image. It runs as nonroot by default.
-FROM dhi.io/python:3.12
+FROM python:3.12-slim
 
 WORKDIR /app
 
