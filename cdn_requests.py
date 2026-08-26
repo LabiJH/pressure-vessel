@@ -9,7 +9,6 @@ from prometheus_client import Gauge, Histogram
 API_URL = "https://api.steampowered.com/IContentServerDirectoryService/GetServersForSteamPipe/v1/"
 REGION_RE = re.compile(r'cache\d+-([a-z0-9-]+)\.steamcontent\.com')
 
-test_value = Gauge('steam_cdn_load', 'CDN Hostname + Load', ['hostname', 'load'])
 host_last_seen = Gauge('steam_cdn_host_last_seen_timestamp', 'Unix timestamp this host last appeared in a scrape', ['host'])
 http_response_time = Gauge('steam_cdn_http_response_time', 'HTTP Response time per Node', ['host'])
 http_response_time_hist = Histogram(
@@ -34,7 +33,6 @@ def cdn_fetch() -> list:
         # 'server' == dictionary in the servers list
         for server in data["response"]["servers"]:
             if server["type"] != "CDN":
-                test_value.labels(server["host"], server["weighted_load"]).set(server["weighted_load"])
                 host_last_seen.labels(server["host"]).set(now)
             if server["host"] not in hostnames:
                 hostnames.append(server["host"])
