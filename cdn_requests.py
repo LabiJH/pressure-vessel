@@ -65,8 +65,8 @@ def cdn_fetch() -> list:
 
         time.sleep(random.uniform(0.2, 0.4))
 
-    for lat,lon in POP_COORDS:
-       steam_cdn_pop_info.labels(region=r, lat=str(lat), lon=str(lon)).set(1)
+    for region, (lat,lon) in POP_COORDS.items():
+       steam_cdn_pop_info.labels(region=region, lat=str(lat), lon=str(lon)).set(1)
 
     return hostnames
 
