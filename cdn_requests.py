@@ -91,6 +91,7 @@ def cdn_fetch(force_refresh: bool = False) -> list:
 
 # Calculate RTT for each CDN POP
 def RTT(url_list: list):
+    print("[RTT] Checking HTTP RTT...")
 
     for hosts in url_list:
         jitter = random.uniform(0.2, 0.4)
@@ -120,3 +121,5 @@ def RTT(url_list: list):
         except requests.exceptions.RequestException as e:
             print(f"[skip] {hosts} failed: {e.__class__.__name__}: {e}")
             continue
+
+    print("[RTT] Success!")
