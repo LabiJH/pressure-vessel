@@ -7,6 +7,7 @@ if __name__ == '__main__':
     # Start up the server to expose the metrics.
     start_http_server(8000)
     nodes = []
+    print("Starting Steam CDN Exporter...")
 
     while True:
         try:
