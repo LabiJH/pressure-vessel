@@ -9,4 +9,4 @@ if __name__ == '__main__':
 
     while True:
        cdn_fetch()
-       time.sleep(10)
+       time.sleep(30)
