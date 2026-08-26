@@ -1,0 +1,7 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'steam-cdn-tracker'
+    static_configs:
+      - targets: ['steam-exporter:8000']
