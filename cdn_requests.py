@@ -36,7 +36,7 @@ POP_COORDS = {
 
 steam_cdn_pop_info = Gauge('steam_cdn_pop_info', 'POP coordinates', ['region', 'lat', 'lon'])
 host_last_seen = Gauge('steam_cdn_host_last_seen_timestamp', 'Unix timestamp this host last appeared in a scrape', ['host'])
-http_response_time = Gauge('steam_cdn_http_response_time', 'HTTP Response time per Node', ['host'])
+http_response_time = Gauge('steam_cdn_http_response_time', 'HTTP Response time per Node', ['host', 'region'])
 http_response_time_hist = Histogram(
     'steam_cdn_http_response_time_seconds',
     'HTTP response time per Steam CDN region',
@@ -84,7 +84,7 @@ def RTT(url_list: list):
             r = requests.get(f'https://{hosts}', timeout=10.0)
             t2 = time.time()
             ttt = (t2 - t1) * 1000
-            http_response_time.labels(hosts).set(ttt)
+            http_response_time.labels(hosts, region).set(ttt)
             http_response_time_hist.labels(region).observe(ttt / 1000)
             print(f"HTTPS response time for {hosts} : {ttt:.2f}ms")
 
@@ -93,7 +93,7 @@ def RTT(url_list: list):
             r = requests.get(f'http://{hosts}', timeout=10.0)
             t2 = time.time()
             ttt = (t2 - t1) * 1000
-            http_response_time.labels(hosts).set(ttt)
+            http_response_time.labels(hosts, region).set(ttt)
             http_response_time_hist.labels(region).observe(ttt / 1000)
             print(f"HTTP response time for {hosts} : {ttt:.2f}ms")
 
