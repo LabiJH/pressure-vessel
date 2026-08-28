@@ -2,7 +2,7 @@
 
 This project is a best-effort tracker for the publicly available Steam CDN nodes, using Valve's own `GetServersForSteamPipe` API (https://api.steampowered.com/IContentServerDirectoryService/GetServersForSteamPipe/v1/).
 
-Check out the public dashboard here: <LINK TO BE ADDED>
+Check out the public dashboard here: [Steamgauge](https://steamgauge.dev)
 
 This isn't meant to be exhaustive. Nodes can fluctuate in and out of an active state, and this probe won't catch every single one out there.
 
