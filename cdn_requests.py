@@ -1,6 +1,7 @@
 import random
 import time
 import re
+import datetime
 from ssl import SSLError
 
 import requests
@@ -50,6 +51,7 @@ http_response_time_hist = Histogram(
 )
 _cached_hosts = []
 _last_discovery = 0
+_scrape_count = 0
 
 def region_from_host(host: str) -> str:
     m = REGION_RE.match(host)
@@ -91,7 +93,10 @@ def cdn_fetch(force_refresh: bool = False) -> list:
 
 # Calculate RTT for each CDN POP
 def RTT(url_list: list):
-    print("[RTT] Checking HTTP RTT...")
+    global _scrape_count
+    _scrape_count += 1
+    ct = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"{ct} [RTT] (Scrape #{_scrape_count}) Checking HTTP RTT...")
 
     for hosts in url_list:
         jitter = random.uniform(0.2, 0.4)
@@ -104,7 +109,8 @@ def RTT(url_list: list):
             ttt = (t2 - t1) * 1000
             http_response_time.labels(hosts, region).set(ttt)
             http_response_time_hist.labels(region).observe(ttt / 1000)
-            print(f"HTTPS response time for {hosts} : {ttt:.2f}ms")
+            ct = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            print(f"{ct} (Scrape {_scrape_count}) HTTPS response time for {hosts} : {ttt:.2f}ms")
 
         except requests.exceptions.SSLError:
             try:
@@ -114,12 +120,15 @@ def RTT(url_list: list):
                 ttt = (t2 - t1) * 1000
                 http_response_time.labels(hosts, region).set(ttt)
                 http_response_time_hist.labels(region).observe(ttt / 1000)
-                print(f"HTTP response time for {hosts} : {ttt:.2f}ms")
+                ct = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                print(f"{ct} (Scrape {_scrape_count}) HTTP response time for {hosts} : {ttt:.2f}ms")
             except Exception as e:
                 print(e)
 
         except requests.exceptions.RequestException as e:
-            print(f"[skip] {hosts} failed: {e.__class__.__name__}: {e}")
+            ct = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            print(f"{ct} (Scrape {_scrape_count}) [skip] {hosts} failed: {e.__class__.__name__}: {e}")
             continue
 
-    print("[RTT] Success!")
+    ct = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"{ct} [RTT] Scrape {_scrape_count} done!")
