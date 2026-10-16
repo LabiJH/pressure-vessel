@@ -17,7 +17,7 @@ If you want to deploy this yourself and develop the exporter:
 1. `git clone https://github.com/LabiJH/pressure-vessel.git`
 2. `cd pressure-vessel`
 3. `docker compose up -d --build`
-4. Navigate to `http://localhost:3000` and log in with the default Grafana credentials (`admin` / `admin`). The CDN dashboard is provisioned automatically, so it'll already be there.
+4. Navigate to `http://localhost:3000` and log in with the default Grafana credentials (`admin` / `admin`). The CDN dashboard is ~~provisioned automatically, so it'll already be there.~~ currently NOT automatically provisioned, it needs to be loaded via the pv-dashboard.json after you are logged in. Currently there are no Plans to add more Documentation, as this is strictly a hobby project.
 
 ### A note on exposure (PLEASE UNDERSTAND WHAT YOU ARE DOING)
 
